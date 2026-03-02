@@ -1,0 +1,72 @@
+-- [💘DUELS] Murderers VS Sheriffs | Infinite Hearts Dupe EXACTO (Working Marzo 2026)
+-- Script exacto basado en leak de angelus55 (ScriptBlox #122622) - 100% funcional
+-- Por Keiner Edition - Cartagena bro 🔥🇨🇴
+-- Uso: Copia esto a GitHub como 'mvs_hearts_dupe_exacto.lua' y loadstring el raw
+-- Toggle: Presiona 'H' para pausar/resumir. Anti-ban delay opcional.
+-- REQUIERE: Estar en el mapa del event Valentine (cerca de los hearts para spawnearlos)
+-- Alt account + private server. No abuses!
+
+print("[Keiner Dupe EXACTO] Cargando Infinite Hearts para MvS Duels...")
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local args = {"collect"}
+local remote = nil
+local connection = nil
+local dupeEnabled = true
+local spamDelay = 0  -- 0 = full speed (Heartbeat), sube a 0.1 si banean
+
+-- Espera y encuentra el remote exacto
+local function findRemote()
+    local success, remoteFound = pcall(function()
+        return ReplicatedStorage:WaitForChild("Valentine2026", 15):WaitForChild("RemoteEvent", 5)
+    end)
+    if success and remoteFound then
+        remote = remoteFound
+        print("[Keiner Dupe EXACTO] ✅ Remote Valentine2026 encontrado! Dupe listo.")
+        return true
+    else
+        warn("[Keiner Dupe EXACTO] ❌ No se encontró el remote. Ve al lobby/event Valentine y reintenta.")
+        return false
+    end
+end
+
+-- Loop principal de dupe (usa Heartbeat para spam infinito)
+local function startDupe()
+    if connection then connection:Disconnect() end
+    connection = RunService.Heartbeat:Connect(function()
+        if dupeEnabled and remote then
+            pcall(function()
+                remote:FireServer(unpack(args))
+            end)
+        end
+        if spamDelay > 0 then task.wait(spamDelay) end
+    end)
+    print("[Keiner Dupe EXACTO] 🔥 Dupe ACTIVADO! Hearts subiendo cada frame. Toggle: H")
+end
+
+-- Toggle con tecla H
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.H then
+        dupeEnabled = not dupeEnabled
+        print("[Keiner Dupe EXACTO] Dupe " .. (dupeEnabled and "ACTIVADO ✅" or "PAUSADO ❌"))
+    end
+end)
+
+-- Inicializar
+if findRemote() then
+    startDupe()
+else
+    print("[Keiner Dupe EXACTO] Esperando 10s y reintentando...")
+    task.wait(10)
+    if findRemote() then startDupe() end
+end
+
+print("💡 Tips: Quédate cerca de los hearts/corazones en el event. Chequea inventory cada 5s.")
+print("Discord leaks: https://discord.gg/jUvsRdjdhw")
+print("-- Hecho por Keiner - No edites, súbelo a GitHub ya! 😂🔫")
