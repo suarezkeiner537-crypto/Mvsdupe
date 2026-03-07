@@ -1,0 +1,119 @@
+-- [🍀] Murderers VS Sheriffs Duels | Infinite Tréboles / Clovers Farm - Evento Nuevo Marzo 2026
+-- Script EXACTO por Keiner (Cartagena, CO) 🔥🇨🇴
+-- Features: Auto-spam remotes del event, toggle con 'H', anti-crash, prints claros
+-- Uso: Ejecuta en lobby/map del event (cerca de tréboles). Alt + private server siempre!
+-- Si no detecta remote, cambia server o dime qué print sale para tunearlo.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local LocalPlayer = Players.LocalPlayer
+local farmConnection = nil
+local farmActive = true
+local delayBetweenFires = 0  -- 0 = máximo speed (Heartbeat). Sube a 0.05 si hay lag/ban risk
+
+-- Posibles nombres del event folder/remote (basado en patterns comunes + St. Patrick 2026)
+local possibleEventNames = {
+    "StPatricks2026", "ShamrockEvent", "LuckyClover", "CloverHunt", "PatrickDay",
+    "TrebolesEvent", "Lucky2026", "Clover2026", "EventMarch2026", "ShamrockHunt"
+}
+
+local commonArgs = {  -- Args que suelen funcionar en events de collect/claim
+    "collect", "claim", "pickup", "giveReward", "harvest", "grab", true, 1, "Clover", "Trebol"
+}
+
+local foundRemotes = {}  -- Guardamos remotes detectados
+
+print("[Keiner 🍀] Iniciando farm de tréboles infinitos... Espera detección de remotes.")
+
+-- Función para buscar remotes del event
+local function scanForEventRemotes()
+    foundRemotes = {}
+    for _, name in ipairs(possibleEventNames) do
+        local folder = ReplicatedStorage:FindFirstChild(name)
+        if folder then
+            print("[Keiner 🍀] ✅ Folder encontrado: " .. name)
+            for _, child in ipairs(folder:GetChildren()) do
+                if child:IsA("RemoteEvent") or child:IsA("RemoteFunction") then
+                    table.insert(foundRemotes, child)
+                    print("[Keiner 🍀]   → Remote: " .. child.Name .. " (" .. child.ClassName .. ")")
+                end
+            end
+        end
+    end
+    
+    -- Búsqueda fallback por keywords en TODO ReplicatedStorage
+    if #foundRemotes == 0 then
+        print("[Keiner 🍀] Buscando fallback por keywords...")
+        for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
+            local lowerName = string.lower(obj.Name)
+            if (obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction")) and (
+                string.find(lowerName, "clover") or string.find(lowerName, "trebol") or
+                string.find(lowerName, "shamrock") or string.find(lowerName, "patrick") or
+                string.find(lowerName, "lucky") or string.find(lowerName, "collect") or
+                string.find(lowerName, "claim") or string.find(lowerName, "event")
+            ) then
+                table.insert(foundRemotes, obj)
+                print("[Keiner 🍀] ✅ Fallback encontrado: " .. obj:GetFullName())
+            end
+        end
+    end
+    
+    if #foundRemotes > 0 then
+        print("[Keiner 🍀] ¡" .. #foundRemotes .. " remotes listos! Farm activado. Toggle: Presiona H")
+        return true
+    else
+        warn("[Keiner 🍀] No encontré remotes del event. Asegúrate de estar en el mapa del evento y reintenta.")
+        return false
+    end
+end
+
+-- Función principal de farm (spam en Heartbeat)
+local function startFarming()
+    if farmConnection then farmConnection:Disconnect() end
+    farmConnection = RunService.Heartbeat:Connect(function()
+        if not farmActive then return end
+        for _, remote in ipairs(foundRemotes) do
+            pcall(function()
+                for _, arg in ipairs(commonArgs) do
+                    if remote:IsA("RemoteEvent") then
+                        remote:FireServer(arg)
+                    elseif remote:IsA("RemoteFunction") then
+                        remote:InvokeServer(arg)
+                    end
+                end
+            end)
+        end
+        if delayBetweenFires > 0 then
+            task.wait(delayBetweenFires)
+        end
+    end)
+end
+
+-- Toggle con tecla H
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if gameProcessedEvent then return end
+    if input.KeyCode == Enum.KeyCode.H then
+        farmActive = not farmActive
+        print("[Keiner 🍀] Farm " .. (farmActive and "ACTIVADO ✅ - Tréboles subiendo!" or "PAUSADO ❌"))
+    end
+end)
+
+-- Iniciar con retry si no carga al principio
+local function initialize()
+    if scanForEventRemotes() then
+        startFarming()
+    else
+        print("[Keiner 🍀] Reintentando en 8 segundos... (cambia de server si no carga)")
+        task.wait(8)
+        initialize()  -- Retry recursivo (máx 2-3 veces ok)
+    end
+end
+
+initialize()
+
+print("[Keiner 🍀] Listo! Estate AFK cerca de los tréboles en el event map.")
+print("Tips: Toggle H para pausar si ves warning/ban wave. Usa alt account bro!")
+print("-- Hecho por Keiner - Cartagena 🔥 No abuses y no te baneen 😂🍀 --")
