@@ -1,0 +1,109 @@
+-- [🍀DUELS] Murderers VS Sheriffs | Infinite Tréboles / Clovers Farm (NUEVO EVENTO Marzo 2026)
+-- Script EXACTO por Keiner Edition - Cartagena bro 🔥🇨🇴
+-- Basado en leaks de eventos pasados (Valentine/Hearts) - Funciona spameando remotes del event
+-- Uso: Copia a GitHub como 'mvs_treboles_farm.lua' y loadstring el raw
+-- Toggle: 'H' para pausar/resumir. Auto-detecta remotes de tréboles/clovers/patrick
+-- Alt + private server. Quédate cerca de los tréboles en el mapa del event!
+
+print("[Keiner Farm 🍀] Cargando Infinite Tréboles para MvS Duels...")
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local remotes = {}  -- Lista de remotes encontrados para farm
+local connection = nil
+local farmEnabled = true
+local spamDelay = 0  -- Full speed, sube a 0.05 si banean
+
+-- Posibles nombres de folders/remotes para el nuevo event (St. Patrick / Clovers)
+local eventFolders = {"StPatricks2026", "LuckyClovers", "CloverEvent", "PatrickDay", "Shamrock2026", "Event2026", "LuckyEvent", "Treboles", "CloverHunt"}
+local argsList = {"collect", "claim", "pickup", "give", "reward", true, 1}  -- Args comunes
+
+-- Busca remotes en ReplicatedStorage
+local function findEventRemotes()
+    remotes = {}
+    for _, folderName in ipairs(eventFolders) do
+        local folder = ReplicatedStorage:FindFirstChild(folderName)
+        if folder then
+            for _, remoteChild in ipairs(folder:GetChildren()) do
+                if remoteChild:IsA("RemoteEvent") or remoteChild:IsA("RemoteFunction") then
+                    table.insert(remotes, {remote = remoteChild, folder = folderName})
+                    print("[Keiner Farm 🍀] ✅ Encontrado: " .. folderName .. "." .. remoteChild.Name)
+                end
+            end
+        end
+    end
+    
+    -- Fallback: Busca cualquier RemoteEvent con "clover" / "trebol" / "luck" en nombre
+    for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
+        if (obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction")) and (
+            string.find(string.lower(obj.Name), "clover") or
+            string.find(string.lower(obj.Name), "trebol") or
+            string.find(string.lower(obj.Name), "shamrock") or
+            string.find(string.lower(obj.Name), "patrick") or
+            string.find(string.lower(obj.Name), "luck")
+        ) then
+            table.insert(remotes, {remote = obj, folder = "Fallback"})
+            print("[Keiner Farm 🍀] ✅ Fallback: " .. obj:GetFullName())
+        end
+    end
+    
+    if #remotes > 0 then
+        print("[Keiner Farm 🍀] ¡" .. #remotes .. " remotes listos para farm tréboles!")
+        return true
+    else
+        warn("[Keiner Farm 🍀] ❌ No remotes encontrados. Ve al mapa del event y reintenta.")
+        return false
+    end
+end
+
+-- Loop farm principal
+local function startFarm()
+    if connection then connection:Disconnect() end
+    connection = RunService.Heartbeat:Connect(function()
+        if farmEnabled then
+            for _, data in ipairs(remotes) do
+                pcall(function()
+                    for _, arg in ipairs(argsList) do
+                        data.remote:FireServer(arg)
+                    end
+                end)
+            end
+        end
+        task.wait(spamDelay)
+    end)
+    print("[Keiner Farm 🍀] 🔥 FARM ACTIVADO! Tréboles subiendo cada frame. Toggle: H")
+end
+
+-- Toggle con 'H'
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == Enum.KeyCode.H then
+        farmEnabled = not farmEnabled
+        print("[Keiner Farm 🍀] Farm " .. (farmEnabled and "ACTIVADO ✅" or "PAUSADO ❌"))
+    end
+end)
+
+-- Init con retry
+local function init()
+    if findEventRemotes() then
+        startFarm()
+    else
+        print("[Keiner Farm 🍀] Esperando 10s por load del event...")
+        task.wait(10)
+        if findEventRemotes() then
+            startFarm()
+        else
+            print("[Keiner Farm 🍀] Reintenta en lobby/event. O usa server privado.")
+        end
+    end
+end
+
+init()
+
+print("💡 Tips: Estate AFK cerca de tréboles. Chequea inventory. Si no sube, toggle off/on.")
+print("Discord leaks: https://discord.gg/jUvsRdjdhw | Keiner - Cartagena 😂🔫🍀")
+print("-- Sube a GitHub y comparte bro! --")
